@@ -1,7 +1,8 @@
-// Para manejar conexiones con base de datos de mongodb
+// conexiones con base de datos de mongodb
 const mongoose = require('mongoose');
 // Validacion para que no se repita un valor 
 const uniqueValidator = require('mongoose-unique-validator');
+
 // Objeto que guarda validacion de datos
 let rolesValidos = {
     values: ['ADMIN_ROLE', 'USER_ROLE'],
@@ -18,7 +19,7 @@ let usuarioSchema = new Schema({
     },
     email: {
         type: String,
-        unique: true,
+        unique: true, // propiedad de valor único
         required: [true, 'El email es necesario']
     },
     password: {
@@ -44,6 +45,7 @@ let usuarioSchema = new Schema({
     }
 });
 
+// Metodo para eliminar de la impresion del json con el toJson la propiedad password
 usuarioSchema.methods.toJSON = function () {
 
     let user = this;
