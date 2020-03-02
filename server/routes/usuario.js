@@ -11,9 +11,16 @@ const app = express();
 
 // Peticion Get listar registros
 app.get('/usuario', function(req, res) {
+    
+    let desde = req.query.desde || 0;
+    desde = Number(desde);
 
-    Usuario.find({})
-            // .limit(5)
+    let limite = req.query.limite || 5;
+    limite = Number(limite);
+
+    Usuario.find({estado: true})
+            .skip(desde)
+            .limit(limite)
             .exec( (err, usuarios) =>{
 
                 if( err ) {
@@ -21,16 +28,21 @@ app.get('/usuario', function(req, res) {
                         ok: false,
                         err
                     });
+                    
                 }
 
-                res.json({
-                    ok: true,
-                    usuarios
-                });
 
+                // para llevar un conteo de registros al final de la busqueda
+                Usuario.count({estado: true}, (err, conteo) => {
+                   
+                    res.json({
+                        ok: true,
+                        usuarios,
+                        cuantos: conteo
+                    });
+                
+                }); 
             });
-    
-
 });
 
 // Peticion Post insertar nuevo registro
@@ -41,7 +53,7 @@ app.post('/usuario', function(req, res) {
     let usuario = new Usuario({
         nombre: body.nombre,
         email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
+        password: bcrypt.hashSync(body.password, 10), // metodo bcrypt para encriptar la contraseña
         role: body.role
     });
 
@@ -90,8 +102,39 @@ app.put('/usuario/:id', function(req, res) {
 });
 
 // Peticion Delete eliminar registro
-app.delete('/usuario', function(req, res) {
-    res.json('delete Usuario');
+app.delete('/usuario/:id', function(req, res) {
+
+    let id = req.params.id;
+
+    let cambiaEstado = {
+        estado: false
+    }
+
+    // Usuario.findByIdAndRemove(id, (err, usuarioBorrado)=>{
+    Usuario.findByIdAndUpdate(id, cambiaEstado, (err, usuarioBorrado)=>{
+
+        if( err ) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+
+        if( !usuarioBorrado ) {
+            return res.status(400).json({
+                ok: false,
+                err: {
+                    message: 'Usuario no encontrado'
+                }
+            });
+        }
+
+        res.json({
+            ok: true,
+            usuario: usuarioBorrado
+        });
+    })
+
 });
 
 module.exports = app;
